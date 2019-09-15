@@ -12,7 +12,7 @@ let
       boot.kernelParams = [ "earlycon=ttyS0" "console=ttyS0" ];
 
       boot.loader.grub.version = 2;
-      boot.loader.grub.device = "/dev/sda";
+      boot.loader.grub.device = "/dev/vda";
       boot.loader.timeout = 0;
 
       services.openssh.enable = true;
