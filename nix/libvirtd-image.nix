@@ -17,6 +17,9 @@ let
       services.openssh.startWhenNeeded = false;
       services.openssh.extraConfig = "UseDNS no";
 
+      boot.initrd.availableKernelModules = [ "ata_piix" "uhci_hcd" "virtio_pci" ];
+      boot.kernelModules = [ "kvm-intel" ];
+
       services.qemuGuest.enable = true;
     } ];
   }).config;

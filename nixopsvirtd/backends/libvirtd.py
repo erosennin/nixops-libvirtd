@@ -311,7 +311,7 @@ class LibvirtdState(MachineState):
             '    <disk type="file" device="disk">',
             '      <driver name="qemu" type="qcow2"/>',
             '      <source file="{3}"/>',
-            '      <target dev="hda"/>',
+            '      <target dev="sda" bus="virtio" />',
             '    </disk>',
             '\n'.join([iface(n) for n in defn.networks]),
             '    <graphics type="vnc" port="-1" autoport="yes"/>' if not defn.headless else "",
