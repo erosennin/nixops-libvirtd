@@ -285,6 +285,7 @@ class LibvirtdState(MachineState):
             return "\n".join([
                 '    <interface type="{interface_type}">',
                 '      <source {interface_type}="{source}"/>',
+                '      <model type="virtio"/>',
                 '    </interface>',
             ]).format(
                 interface_type=n.interface_type,
