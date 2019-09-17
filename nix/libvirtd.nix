@@ -160,6 +160,16 @@ in
     deployment.hasFastConnection = true;
 
     services.qemuGuest.enable = true;
+
+    boot.initrd.availableKernelModules = [
+      "ata_piix" "uhci_hcd" "virtio_pci" "virtio_rng"
+    ];
+    boot.kernelModules = [ "kvm-intel" "virtio_rng" ];
+
+    # should print everything (more than 8 should be useless)
+    boot.consoleLogLevel=8;
+
+
 };
 
 }

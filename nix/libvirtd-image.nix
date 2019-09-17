@@ -17,12 +17,49 @@ let
 
       services.openssh.enable = true;
       services.openssh.startWhenNeeded = false;
+
+      # to prevent issues
+      systemd.services.sshd.serviceConfig.TimeoutStartSec = "2s";
       services.openssh.extraConfig = "UseDNS no";
 
-      boot.initrd.availableKernelModules = [ "ata_piix" "uhci_hcd" "virtio_pci" ];
+      boot.initrd.availableKernelModules = [
+        "ata_piix" "uhci_hcd"
+        "virtio" "virtio_pci" "virtio_net" "virtio_rng" "virtio_blk" "virtio_console"
+      ];
       boot.kernelModules = [ "kvm-intel" ];
 
       services.qemuGuest.enable = true;
+
+      # thanks to clever
+      # https://github.com/cleverca22/not-os/blob/master/runit.nix#L62-L66
+      # https://github.com/cleverca22/not-os/blob/d55aa5ca2d3795d7151ac8a4099c79bf506a2aa4/qemu.nix#L4
+      systemd.services.hwrng = {
+        # after = [ "network.target" "sound.target" ];
+        description = "Hardware generator ";
+        # eventually sshd ?
+        # wantedBy = optional (!cfg.startWhenNeeded) "multi-user.target";
+        # wantedBy = optional (!cfg.startWhenNeeded) "multi-user.target";
+
+        serviceConfig = {
+          # User = "${cfg.user}";
+          ExecStart = ''
+            #!/bin/sh
+            export PATH=$PATH:${pkgs.rng_tools}/bin
+            exec rngd -r /dev/hwrng
+          '';
+          # Type = "notify";
+          # LimitRTPRIO = 50;
+          # LimitRTTIME = "infinity";
+          # ProtectSystem = true;
+          # NoNewPrivileges = true;
+          # ProtectKernelTunables = true;
+          # ProtectControlGroups = true;
+          # ProtectKernelModules = true;
+          # RestrictAddressFamilies = "AF_INET AF_INET6 AF_UNIX AF_NETLINK";
+          # RestrictNamespaces = true;
+        };
+      };
+
     } ];
   }).config;
 
