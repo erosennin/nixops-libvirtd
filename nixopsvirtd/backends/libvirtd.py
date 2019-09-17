@@ -301,6 +301,14 @@ class LibvirtdState(MachineState):
                 "    <cmdline>%s</cmdline>" % defn.cmdline if len(defn.kernel) > 0 else "",
                 '</os>']
 
+        def _make_rng(defn):
+            return [
+                '<rng model="virtio">',
+                '   <rate period="2000" bytes="1234"/>',
+                '   <backend model="random">/dev/random</backend>',
+                '</rng>'
+            ]
+
         domain_fmt = "\n".join([
             '<domain type="{5}">',
             '  <name>{0}</name>',
@@ -318,6 +326,7 @@ class LibvirtdState(MachineState):
             '    <graphics type="vnc" port="-1" autoport="yes"/>' if not defn.headless else "",
             '    <input type="keyboard" bus="usb"/>',
             '    <input type="mouse" bus="usb"/>',
+            '\n'.join(_make_rng(defn)),
             '    <channel type="unix">',
             '      <target type="virtio" name="org.qemu.guest_agent.0"/>',
             '      <address type="virtio-serial" controller="0" bus="0" port="1"/>',
