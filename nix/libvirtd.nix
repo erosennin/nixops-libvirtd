@@ -139,6 +139,9 @@ in
     boot.loader.grub.device = "/dev/vda";
     boot.loader.timeout = 0;
 
+    # boot.kernelModules = [ "kvm-intel" ];
+    boot.kernelModules = [ "kvm-intel" "virtio_rng" ];
+
     services.openssh.enable = true;
     services.openssh.startWhenNeeded = false;
     services.openssh.extraConfig = "UseDNS no";
@@ -147,10 +150,13 @@ in
 
     services.qemuGuest.enable = true;
 
+    # boot.initrd.availableKernelModules = [
+    #   "ata_piix" "uhci_hcd" "virtio_pci" "virtio_rng"
+    # ];
     boot.initrd.availableKernelModules = [
-      "ata_piix" "uhci_hcd" "virtio_pci" "virtio_rng"
+      "ata_piix" "uhci_hcd"
+      "virtio" "virtio_pci" "virtio_net" "virtio_rng" "virtio_blk" "virtio_console"
     ];
-    boot.kernelModules = [ "kvm-intel" "virtio_rng" ];
 
     # should print everything (more than 8 should be useless)
     boot.consoleLogLevel=8;
