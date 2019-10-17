@@ -73,10 +73,6 @@ class LibvirtdDefinition(MachineDefinition):
             for n in x.findall("attr[@name='networks']/list/*")
         ]
 
-        print("%r" % self.networks)
-        # print("%r" % self.networks[0])
-        # print("%r" % self.networks[1])
-        print("len=%d" % len(self.networks))
         assert len(self.networks) > 0
 
 
@@ -175,8 +171,6 @@ class LibvirtdState(MachineState):
         if self.conn.getLibVersion() < 1002007:
             raise Exception('libvirt 1.2.7 or newer is required at the target host')
 
-        self.storage_pool_name = defn.storage_pool_name
-
         if not self.client_public_key:
             (self.client_private_key, self.client_public_key) = nixops.util.create_key_pair()
 
@@ -229,6 +223,9 @@ class LibvirtdState(MachineState):
         # files should be created with rights depending on parent folder but 
         # this doesn't seem true
         # here I hardcode permission rights (BAD)
+        # use libvirtd as a group
+        import grp
+        gid = grp.getgrnam("libvirtd").gr_gid
         xml = '''
         <volume>
           <name>{name}</name>
@@ -237,10 +234,8 @@ class LibvirtdState(MachineState):
           <target>
             <format type="qcow2"/>
             <permissions>
-                <owner>1000</owner>
-                <group>100</group>
-                <mode>0744</mode>
-                <label>virt_image_t</label>
+                <group>{gid}</group>
+                <mode>0770</mode>
             </permissions>
             {eventual_path}
           </target>
@@ -249,8 +244,8 @@ class LibvirtdState(MachineState):
             name="{}.qcow2".format(self._vm_id()),
             virtual_size=virtual_size,
             actual_size=actual_size,
-            # eventual_path= "<path >%s</path>" % path if path else ""
-            eventual_path= ""
+            gid=gid,
+            eventual_path= "<path >%s</path>" % path if path else ""
         )
         vol = self.pool.createXML(xml)
         self._vol = vol
@@ -339,10 +334,7 @@ class LibvirtdState(MachineState):
 
         try:
             ifaces = self.dom.interfaceAddresses(libvirt.VIR_DOMAIN_INTERFACE_ADDRESSES_SRC_AGENT, 0)
-            # if ifaces is None:
-            #     self.log("Failed to get domain interfaces")
-            #     return
-            # print("The interface IP addresses:")
+            ifaces.update(self.dom.interfaceAddresses(libvirt.VIR_DOMAIN_INTERFACE_ADDRESSES_SRC_LEASE, 0))
             from ipaddress import ip_address
             for (name, val) in ifaces.iteritems():
                 self.log("Parsing interface %s..." % name)
@@ -352,12 +344,10 @@ class LibvirtdState(MachineState):
                         curaddr = ip_address(unicode(ipaddr['addr']))
 
                         if ipaddr['type'] == libvirt.VIR_IP_ADDR_TYPE_IPV4:
-                            print(ipaddr['addr'] + " VIR_IP_ADDR_TYPE_IPV4")
                             if curaddr.is_loopback:
                                 continue
                             self.success("Found address")
                             return ipaddr['addr']
-
                         else:
                             pass
 
@@ -369,6 +359,7 @@ class LibvirtdState(MachineState):
 
 
     def _wait_for_ip(self, prev_time):
+        self.log_start("waiting for IP address to appear in Qemu agent or DHCP leases...")
         while True:
             ip = self._parse_ip()
             if ip:
