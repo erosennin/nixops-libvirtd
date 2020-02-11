@@ -82,9 +82,11 @@ in
     };
 
     deployment.libvirtd.networks = mkOption {
-      default = [ "default" ];
-      type = types.listOf types.str;
-      description = "Names of libvirt networks to attach the VM to.";
+      type = types.listOf (types.submodule (import ./network-options.nix {
+        inherit lib;
+      }));
+      default = [{ source = "default"; type= "virtual"; }];
+      description = "Describe network interfaces.";
     };
 
     deployment.libvirtd.extraDevicesXML = mkOption {
@@ -142,6 +144,8 @@ in
     services.openssh.extraConfig = "UseDNS no";
 
     deployment.hasFastConnection = true;
+
+    services.qemuGuest.enable = true;
 };
 
 }
